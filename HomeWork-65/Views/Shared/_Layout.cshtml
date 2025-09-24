@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Identity
+@inject UserManager<MyUser> UserManager
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8"/>
@@ -27,6 +30,22 @@
                         <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                     </li>
                 </ul>
+            </div>
+            <div class="login_group d-flex align-items-center gap-3">
+                @if(User.Identity.IsAuthenticated)
+                {
+                    var currentUser = await UserManager.GetUserAsync(User);
+
+                    <a asp-action="Details" asp-controller="MyUser" asp-route-id="@currentUser.Id" class="me-2">@User.Identity.Name</a>
+                    <form method="post" asp-controller="Account" asp-action="LogOff" class="d-inline">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Выход</button>
+                    </form>
+                }
+                else
+                {
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-outline-primary btn-sm">Вход</a>
+                    <a asp-controller="Account" asp-action="Register" class="btn btn-outline-success btn-sm">Регистрация</a>
+                }
             </div>
         </div>
     </nav>

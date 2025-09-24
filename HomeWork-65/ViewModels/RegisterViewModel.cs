@@ -14,6 +14,7 @@ public class RegisterViewModel
     
     [Required(ErrorMessage = "Имя пользователя обязательно.")]
     [Display(Name = "Дата рождения")]
+    [Range(18,100,ErrorMessage = "Возраст должен быть выше 18 лет")]
     public int Age { get; set; } 
     [Required(ErrorMessage = "Пароль обязателен.")]
     [MinLength(6, ErrorMessage = "Пароль должен содержать минимум 6 символов.")]
@@ -23,7 +24,7 @@ public class RegisterViewModel
     [Display(Name = "Пароль")]
     public string Password { get; set; }
     
-    [Required]
+    [Required(ErrorMessage = "Подтвердить пароль")]
     [Compare("Password", ErrorMessage = "Пароли не совпадают")]
     [DataType(DataType.Password)]
     [Display(Name = "Подтвердить пароль")]

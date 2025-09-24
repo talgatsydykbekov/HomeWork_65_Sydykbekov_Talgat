@@ -1,0 +1,35 @@
+﻿@model MyUser
+
+@{
+    ViewBag.Title = "Информация о пользователе";
+}
+
+
+<div class="container mt-5">
+    <div class="card shadow-lg border-0 rounded-3">
+        <div class="row g-0">
+            <!-- Аватар -->
+            <div class="col-md-4 d-flex justify-content-center align-items-center bg-light p-4">
+                <img src="/@Model.Avatar" alt="Аватар пользователя"
+                     class="img-fluid rounded-circle shadow"
+                     style="width: 200px; height: 200px; object-fit: cover;" />
+            </div>
+
+            <!-- Информация -->
+            <div class="col-md-8">
+                <div class="card-body p-4">
+                    <h3 class="card-title text-primary mb-3">@Model.UserName</h3>
+                    <p class="card-text mb-2"><strong>Email:</strong> @Model.Email</p>
+                    <p class="card-text mb-2"><strong>Возраст:</strong> @Model.Age</p>
+                    
+                    <div class="mt-4">
+                        <a asp-action="Edit" asp-route-id="@Model.Id" 
+                           class="btn btn-warning btn-lg px-4">
+                            ✏️ Редактировать
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

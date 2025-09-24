@@ -61,13 +61,14 @@ public class AccountController : Controller
                     UserName = model.UserName,
                     Email = model.Email,
                     Avatar = relativePath,
+                    Age = model.Age,
                 };
                 var result = await _userManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
                     await _userManager.AddToRoleAsync(user, "user");
                     await _signInManager.SignInAsync(user, false);
-                    return RedirectToAction("Index", "Home");
+                    return RedirectToAction("Index", "Chat");
                 }
                 foreach (var error in result.Errors)
                     ModelState.AddModelError(string.Empty, error.Description);
@@ -112,7 +113,7 @@ public class AccountController : Controller
                     return Redirect(model.ReturnUrl);
                 }
 
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("Index", "Chat");
             }
             ModelState.AddModelError("", "Неправильный логин или пароль");
         }
