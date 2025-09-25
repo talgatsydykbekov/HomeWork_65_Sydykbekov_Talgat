@@ -1,9 +1,11 @@
 ﻿using HomeWork_65.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HomeWork_65.Controllers;
 
+[Authorize]
 public class MyUserController : Controller
 {
     private MyUserContext _context;

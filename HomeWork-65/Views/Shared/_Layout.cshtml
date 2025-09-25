@@ -35,7 +35,10 @@
                 @if(User.Identity.IsAuthenticated)
                 {
                     var currentUser = await UserManager.GetUserAsync(User);
-
+                    @if (User.IsInRole("admin"))
+                    {
+                        <a asp-action="AllUsers" asp-controller="Chat"  class="me-2">Список пользователей</a>
+                    }
                     <a asp-action="Details" asp-controller="MyUser" asp-route-id="@currentUser.Id" class="me-2">@User.Identity.Name</a>
                     <form method="post" asp-controller="Account" asp-action="LogOff" class="d-inline">
                         <button type="submit" class="btn btn-outline-danger btn-sm">Выход</button>

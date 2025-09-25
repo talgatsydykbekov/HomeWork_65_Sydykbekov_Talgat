@@ -20,7 +20,7 @@ public class AdminInitializer
 
             if (await userManager.FindByEmailAsync(adminEmail) == null)
             {
-                MyUser admin = new MyUser { Email = adminEmail, UserName = adminEmail, };
+                MyUser admin = new MyUser { Email = adminEmail, UserName = adminEmail,Avatar = "default.png"};
                 IdentityResult result = await userManager.CreateAsync(admin, adminPassword);
                 if (result.Succeeded)
                 {
