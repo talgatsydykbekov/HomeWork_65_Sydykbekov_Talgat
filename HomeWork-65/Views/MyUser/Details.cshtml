@@ -1,9 +1,12 @@
-﻿@model MyUser
+﻿@using System.Security.Claims
+@model MyUser
 
 @{
     ViewBag.Title = "Информация о пользователе";
 }
-
+@{
+    int currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+}
 
 <div class="container mt-5">
     <div class="card shadow-lg border-0 rounded-3">
@@ -20,13 +23,37 @@
                     <h3 class="card-title text-primary mb-3">@Model.UserName</h3>
                     <p class="card-text mb-2"><strong>Email:</strong> @Model.Email</p>
                     <p class="card-text mb-2"><strong>Возраст:</strong> @Model.Age</p>
-                    
-                    <div class="mt-4">
-                        <a asp-action="Edit" asp-route-id="@Model.Id" 
-                           class="btn btn-warning btn-lg px-4">
-                            ✏️ Редактировать
-                        </a>
-                    </div>
+                    @if (currentUserId == Model.Id || User.IsInRole("admin"))
+                    {
+                        <div class="mt-4">
+                            <a asp-action="Edit" asp-route-id="@Model.Id" 
+                               class="btn btn-warning btn-lg px-4">
+                                ✏️ Редактировать
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div>
+                <div class="border rounded p-3" style="height:70vh; overflow-y:auto; background-color:#f8f9fa;">
+                    @if (Model.Messages.Count == 0)
+                    {
+                        <h1>Нет сообщений</h1>
+                    }
+                    else
+                    {
+                        <p>@Model.Messages.Count сообщений</p>
+                        @foreach (var mes in Model.Messages)
+                        {
+                            <div class="d-flex mb-3">
+                                <img src="/@mes.User.Avatar" class="rounded-circle me-2" style="width:50px;height:50px;object-fit:cover;" alt="@mes.User.UserName">
+                                <div>
+                                    <div class="fw-bold">@mes.User.UserName<span class="text-muted" style="font-size:12px;">@mes.Date.ToString("HH:mm dd.MM.yyyy")</span></div>
+                                    <div>@mes.Content</div>
+                                </div>
+                            </div>
+                        }
+                    }
                 </div>
             </div>
         </div>

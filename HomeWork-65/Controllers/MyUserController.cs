@@ -3,6 +3,7 @@ using HomeWork_65.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace HomeWork_65.Controllers;
 
@@ -25,7 +26,7 @@ public class MyUserController : Controller
     {
         if (id.HasValue)
         {
-            var user = _context.Users.FirstOrDefault(u => u.Id == id);
+            var user = _context.Users.Include(u => u.Messages.Where(u => u.UserId == id)).FirstOrDefault(u => u.Id == id);
             if (user == null)
             {
                 return NotFound();
