@@ -35,11 +35,11 @@
                             <input asp-for="Age" class="form-control" min="2007-01-01" max="2099-01-01"/>
                             <span asp-validation-for="Age" class="text-danger"></span>
                         </div>
-                        
+
                         <div class="mb-3">
-                            <label for="file">Аватар</label>
-                            <input type="file" name="file" class="form-control">
-                            
+                            <label for="Avatar">Аватар</label>
+                            <input type="file" asp-for="Avatar" class="form-control" >
+                            <span asp-validation-for="Avatar" class="text-danger"></span>
                         </div>
                         
                         <div class="mb-3">

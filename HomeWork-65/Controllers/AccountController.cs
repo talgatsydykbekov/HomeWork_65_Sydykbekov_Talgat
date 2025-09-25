@@ -27,17 +27,19 @@ public class AccountController : Controller
     
     
     [HttpPost]
-    public async Task<IActionResult> Register(RegisterViewModel model, IFormFile file)
+    public async Task<IActionResult> Register(RegisterViewModel model)
     {
         if (ModelState.IsValid)
         {
             if (_userManager.Users.Any(u => u.Email == model.Email))
             {
                 ModelState.AddModelError("Email", "Пользователь с таким Email уже существует.");
+                return View(model);
             }
             if (_userManager.Users.Any(u => u.UserName == model.UserName))
             {
                 ModelState.AddModelError("UserName", "Пользователь с таким именем уже существует.");
+                return View(model);
             }
             else
             {
@@ -48,12 +50,12 @@ public class AccountController : Controller
                     Directory.CreateDirectory(uploadedFileName);
                 }
             
-                string fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+                string fileName = $"{Guid.NewGuid()}{Path.GetExtension(model.Avatar.FileName)}";
             
                 string filesavePath = Path.Combine(uploadedFileName, fileName);
                 using (var stream = new FileStream(filesavePath, FileMode.Create))
                 {
-                    await file.CopyToAsync(stream);
+                    await model.Avatar.CopyToAsync(stream);
                 }
                 relativePath = Path.Combine("images/avatars", fileName.Replace("\\", "/"));
                 MyUser user = new MyUser

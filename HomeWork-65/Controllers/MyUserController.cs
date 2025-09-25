@@ -75,7 +75,7 @@ public class MyUserController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Roles = "admin")]
-    public async  Task<IActionResult> Create(RegisterViewModel model,IFormFile file)
+    public async  Task<IActionResult> Create(RegisterViewModel model)
     {
         if (ModelState.IsValid)
         {
@@ -96,12 +96,12 @@ public class MyUserController : Controller
                     Directory.CreateDirectory(uploadedFileName);
                 }
             
-                string fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+                string fileName = $"{Guid.NewGuid()}{Path.GetExtension(model.Avatar.FileName)}";
             
                 string filesavePath = Path.Combine(uploadedFileName, fileName);
                 using (var stream = new FileStream(filesavePath, FileMode.Create))
                 {
-                    await file.CopyToAsync(stream);
+                    await model.Avatar.CopyToAsync(stream);
                 }
                 relativePath = Path.Combine("images/avatars", fileName.Replace("\\", "/"));
                 MyUser user = new MyUser

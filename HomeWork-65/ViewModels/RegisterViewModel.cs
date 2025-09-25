@@ -29,4 +29,7 @@ public class RegisterViewModel
     [DataType(DataType.Password)]
     [Display(Name = "Подтвердить пароль")]
     public string PasswordConfirm { get; set; }
+    
+    [Required(ErrorMessage = "Загрузите аватар")]
+    public IFormFile Avatar { get; set; }
 }

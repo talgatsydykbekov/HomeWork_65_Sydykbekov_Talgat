@@ -14,7 +14,6 @@
                 </div>
                 <div class="card-body">
                     <form method="post" enctype="multipart/form-data" asp-controller="Account" asp-action="Register">
-                        <div asp-validation-summary="None" class="text-danger"></div>
                         
                         <div class="mb-3">
                             <label asp-for="UserName" class="form-label">Ваше имя</label>
@@ -35,9 +34,9 @@
                         </div>
                         
                         <div class="mb-3">
-                            <label for="file">Аватар</label>
-                            <input type="file" name="file" class="form-control">
-                            
+                            <label for="Avatar">Аватар</label>
+                            <input type="file" asp-for="Avatar" class="form-control" >
+                            <span asp-validation-for="Avatar" class="text-danger"></span>
                         </div>
                         
                         <div class="mb-3">
@@ -51,7 +50,7 @@
                             <input asp-for="PasswordConfirm" class="form-control" type="password" />
                             <span asp-validation-for="PasswordConfirm" class="text-danger"></span>
                         </div>
-
+                        <div asp-validation-summary="All" class="text-danger"></div>
                         <button type="submit" class="btn btn-success w-100">Зарегистрироваться</button>
                     </form>
                 </div>
