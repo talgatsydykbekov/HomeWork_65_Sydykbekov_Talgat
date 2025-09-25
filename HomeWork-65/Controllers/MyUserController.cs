@@ -48,7 +48,8 @@ public class MyUserController : Controller
         }
         return NotFound();
     }
-
+    
+    [Authorize(Roles = "admin")]
     public IActionResult Block(int? id)
     {
         if (id.HasValue)

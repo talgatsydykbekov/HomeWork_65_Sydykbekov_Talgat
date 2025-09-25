@@ -8,6 +8,7 @@ public class MyUserContext : IdentityDbContext<MyUser, IdentityRole<int>, int>
 {
     public MyUserContext(DbContextOptions<MyUserContext> options) : base(options) { }
 
+    public DbSet<Message> Messages { get; set; }
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.Entity<MyUser>()

@@ -1,0 +1,21 @@
+﻿@model List<Message>
+
+<div class="border rounded p-3" style="height:70vh; overflow-y:auto; background-color:#f8f9fa;">
+    @if (Model == null)
+    {
+        <h1>Нет сообщений</h1>
+    }
+    else
+    {
+        @foreach (var mes in Model)
+        {
+            <div class="d-flex mb-3">
+                <img src="/@mes.User.Avatar" class="rounded-circle me-2" style="width:50px;height:50px;object-fit:cover;" alt="@mes.User.UserName">
+                <div>
+                    <div class="fw-bold">@mes.User.UserName <span class="text-muted" style="font-size:12px;">@mes.Date.ToString("HH:mm dd.MM.yyyy")</span></div>
+                    <div>@mes.Content</div>
+                </div>
+            </div>
+        }
+    }
+</div>
