@@ -1,6 +1,8 @@
-﻿@model List<Message>
-
-<div class="border rounded p-3" style="height:70vh; overflow-y:auto; background-color:#f8f9fa;">
+﻿@using System.Security.Claims
+@model List<Message>
+@{
+    int currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+}
     @if (Model == null)
     {
         <h1>Нет сообщений</h1>
@@ -9,13 +11,40 @@
     {
         @foreach (var mes in Model)
         {
-            <div class="d-flex mb-3">
-                <img src="/@mes.User.Avatar" class="rounded-circle me-2" style="width:50px;height:50px;object-fit:cover;" alt="@mes.User.UserName">
-                <div>
-                    <div class="fw-bold"><a asp-action="Details" asp-controller="MyUser" asp-route-id="@mes.User.Id">@mes.User.UserName</a> <span class="text-muted" style="font-size:12px;">@mes.Date.ToString("HH:mm dd.MM.yyyy")</span></div>
+            <div class="d-flex mb-3 @(mes.User.Id == currentUserId ? "flex-row-reverse text-end" : "flex-row text-start")">
+                <img src="/@mes.User.Avatar"
+                     class="rounded-circle @(mes.User.Id == currentUserId ? "ms-2" : "me-2")"
+                     style="width:40px;height:40px;object-fit:cover;"
+                     alt="@mes.User.UserName">
+
+                <div class="@(mes.User.Id == currentUserId ? "my-message" : "other-message")">
+                    <div class="fw-bold small text-muted mb-1">
+                        <a asp-action="Details" asp-controller="MyUser" asp-route-id="@mes.User.Id" class="text-decoration-none">
+                            @mes.User.UserName
+                        </a>
+                        <span class="ms-2">@mes.Date.ToString("HH:mm")</span>
+                    </div>
                     <div>@mes.Content</div>
                 </div>
             </div>
         }
     }
-</div>
+
+    <style>
+        .my-message {
+            background: #dcf8c6;
+            padding: 10px 14px;
+            border-radius: 15px 15px 0 15px;
+            max-width: 60%;
+            word-wrap: break-word;
+        }
+
+        .other-message {
+            background: #ffffff; 
+            padding: 10px 14px;
+            border-radius: 15px 15px 15px 0;
+            max-width: 60%;
+            word-wrap: break-word;
+            border: 1px solid #e6e6e6;
+        }
+    </style>

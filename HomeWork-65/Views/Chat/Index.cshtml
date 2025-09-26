@@ -3,10 +3,19 @@
 @{
     ViewBag.Title = "Чат";
 }
+<style>
+    .container > .border { scrollbar-width: thin; scrollbar-color: #6c757d #e9ecef; }
+    .container > .border::-webkit-scrollbar { width: 16px; }
+    .container > .border::-webkit-scrollbar-thumb { background-color: #6c757d; border-radius: 4px; }
+    .container > .border::-webkit-scrollbar-track { background-color: #e9ecef; border-radius: 4px; }
+</style>
+
 <div class="container py-4">
-    
-    <div id="messages">
-        
+
+    <div class="container py-3" style="max-width: 700px;">
+        <div class="border rounded p-3" style="height:500px; overflow-y:auto; background:#f9f9f9;">
+            <div id="messages"></div>
+        </div>
     </div>
 
     <div class="mt-3 d-flex">
@@ -18,9 +27,16 @@
 
 
 
+
 @section Scripts
 {
     <script>
+        function scrollToBottom() {
+            const chatContainer = document.querySelector(".container > .border");
+            if (chatContainer) {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+}
         $('#send').click(function (){
            $.ajax({
                url: '@Url.Action("SendMessage","Chat")',
@@ -28,11 +44,15 @@
                data: {
                    'message' : $('#content').val()
                },
-               success: console.log("Ok")
+               success: function (){
+                   $('#content').val('');
+               }
            });
         });
         let interval = setInterval(function (){
-            $('#messages').load('@Url.Action("GetMessages","Chat")' )
+            $('#messages').load('@Url.Action("GetMessages","Chat")',function (){
+            scrollToBottom();
+            })
         },5000)
     </script>
 }
@@ -42,10 +62,3 @@
 
 
 
-
-<style>
-    .container > .border { scrollbar-width: thin; scrollbar-color: #6c757d #e9ecef; }
-    .container > .border::-webkit-scrollbar { width: 8px; }
-    .container > .border::-webkit-scrollbar-thumb { background-color: #6c757d; border-radius: 4px; }
-    .container > .border::-webkit-scrollbar-track { background-color: #e9ecef; border-radius: 4px; }
-</style>
