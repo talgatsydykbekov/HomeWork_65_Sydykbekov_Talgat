@@ -31,15 +31,16 @@
 @section Scripts
 {
     <script>
+        $('#content').maxLength('120')
         function scrollToBottom() {
             const chatContainer = document.querySelector(".container > .border");
             if (chatContainer) {
                 chatContainer.scrollTop = chatContainer.scrollHeight;
             }
-}
+        }
         $('#send').click(function (){
            $.ajax({
-               url: '@Url.Action("SendMessage","Chat")',
+               url: '@Url.Action("SendMessage", "Chat")',
                type: "POST",
                data: {
                    'message' : $('#content').val()
@@ -50,10 +51,11 @@
            });
         });
         let interval = setInterval(function (){
-            $('#messages').load('@Url.Action("GetMessages","Chat")',function (){
+            $('#messages').load('@Url.Action("GetMessages", "Chat")',function (){
             scrollToBottom();
             })
         },5000)
+    
     </script>
 }
 
