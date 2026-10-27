@@ -1,5 +1,7 @@
 ﻿using HomeWork_65.Models;
 using HomeWork_65.ViewModels;
+using HomeWork_65.Services;
+using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
@@ -11,12 +13,17 @@ public class AccountController : Controller
     private readonly IWebHostEnvironment _env;
     private readonly UserManager<MyUser> _userManager;
     private readonly SignInManager<MyUser> _signInManager;
+    private readonly EmailService _emailService;
+    private readonly ILogger<AccountController> _logger;
 
-    public AccountController(UserManager<MyUser> userManager, SignInManager<MyUser> signInManager, IWebHostEnvironment env)
+    public AccountController(UserManager<MyUser> userManager, SignInManager<MyUser> signInManager,
+        IWebHostEnvironment env, EmailService emailService, ILogger<AccountController> logger)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _env = env;
+        _emailService = emailService;
+        _logger = logger;
     }
     
     [HttpGet]
@@ -70,6 +77,32 @@ public class AccountController : Controller
                 {
                     await _userManager.AddToRoleAsync(user, "user");
                     await _signInManager.SignInAsync(user, false);
+                    try
+                    {
+                        string profileUrl = Url.Action("Details", "MyUser",
+                            new { id = user.Id }, Request.Scheme)
+                            ?? throw new InvalidOperationException("Не удалось создать ссылку на профиль.");
+
+                        string login = HtmlEncoder.Default.Encode(user.UserName!);
+                        string link = HtmlEncoder.Default.Encode(profileUrl);
+
+                        await _emailService.SendEmailAsync(
+                            user.Email!,
+                            "Добро пожаловать в Ajax Chat!",
+                            $"<h2>Добро пожаловать, {login}!</h2>" +
+                            $"<p>Ваш логин: <strong>{login}</strong></p>" +
+                            $"<p><a href=\"{link}\">Открыть мой профиль</a></p>");
+
+                        TempData["RegistrationNotice"] =
+                            "Регистрация завершена. Приветственное письмо отправлено на вашу почту.";
+                    }
+                    catch (Exception exception)
+                    {
+                        _logger.LogWarning(exception,
+                            "Не удалось отправить приветственное письмо пользователю {UserId}.", user.Id);
+                        TempData["RegistrationNotice"] =
+                            "Аккаунт создан, но отправить приветственное письмо не удалось. Вы можете пользоваться чатом.";
+                    }
                     return RedirectToAction("Index", "Chat");
                 }
                 foreach (var error in result.Errors)

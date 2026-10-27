@@ -3,6 +3,10 @@
 @{
     ViewBag.Title = "Чат";
 }
+@if (TempData["RegistrationNotice"] is string notice)
+{
+    <div class="alert alert-info" role="status">@notice</div>
+}
 <style>
     .container > .border { scrollbar-width: thin; scrollbar-color: #6c757d #e9ecef; }
     .container > .border::-webkit-scrollbar { width: 16px; }
