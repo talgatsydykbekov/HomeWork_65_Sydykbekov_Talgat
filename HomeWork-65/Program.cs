@@ -26,7 +26,28 @@ public class Program
         {
             options.LoginPath = new Microsoft.AspNetCore.Http.PathString("/Account/Login");
         });
+        builder.Services.AddTransient<EmailService>();
         var app = builder.Build();
+        if (app.Environment.IsDevelopment()
+            && app.Configuration.GetValue<bool>("TestEmail"))
+        {
+            using var emailScope = app.Services.CreateScope();
+
+            var emailService = emailScope.ServiceProvider
+                .GetRequiredService<EmailService>();
+
+            string recipient = app.Configuration["EmailSettings:Email"]
+                               ?? throw new InvalidOperationException(
+                                   "Не указан email для тестового письма.");
+
+            await emailService.SendEmailAsync(
+                recipient,
+                "Проверка отправки из Ajax Chat",
+                "<h2>Почта работает!</h2><p>Тестовое письмо из проекта.</p>");
+
+            Console.WriteLine("Тестовое письмо отправлено.");
+            return;
+        }
         using (var scope = app.Services.CreateScope())
         {
             var services = scope.ServiceProvider;
