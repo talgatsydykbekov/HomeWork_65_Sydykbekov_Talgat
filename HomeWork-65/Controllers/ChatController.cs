@@ -21,7 +21,7 @@ public class ChatController : Controller
     // GET
     public IActionResult Index()
     {
-        var messages = _context.Messages.Take(30).Include(m => m.User).OrderByDescending(m => m.Date).ToList();
+        var messages = LatestMessages();
         return View(messages);
     }
 
@@ -35,34 +35,49 @@ public class ChatController : Controller
         return View(users);
     }
 
+    [HttpPost]
     public async Task<IActionResult> SendMessage(string? message)
     {
-        int currentUserId = int.Parse(_userManager.GetUserId(User));
-        Message NewMessage = null;
-        if (!string.IsNullOrEmpty(message))
+        if (!int.TryParse(_userManager.GetUserId(User), out int currentUserId))
         {
-             NewMessage = new Message()
-            {
-                Content = message,
-                Date = DateTime.UtcNow,
-                UserId = currentUserId
-            };
-            var result = await _context.Messages.AddAsync(NewMessage);
-            if (result != null)
-            {
-                await _context.SaveChangesAsync();
-            }
+            return Unauthorized();
         }
-        return Json(NewMessage);
+        message = message?.Trim();
+        if (string.IsNullOrEmpty(message) || message.Length > 120)
+        {
+            return BadRequest("Сообщение должно содержать от 1 до 120 символов.");
+        }
+        var newMessage = new Message
+        {
+            Content = message,
+            Date = DateTime.UtcNow,
+            UserId = currentUserId
+        };
+        _context.Messages.Add(newMessage);
+        await _context.SaveChangesAsync();
+        return Ok(new { id = newMessage.Id });
     }
 
     public IActionResult GetMessages()
     {
-        var messages = _context.Messages.Take(30).Include(m => m.User).OrderBy(m => m.Date).ToList();
+        var messages = LatestMessages();
         if (messages == null)
         {
             return NotFound();
         }
         return PartialView("_Messages",messages);
+    }
+
+    private List<Message> LatestMessages()
+    {
+        return _context.Messages.AsNoTracking()
+            .Include(m => m.User)
+            .OrderByDescending(m => m.Date)
+            .ThenByDescending(m => m.Id)
+            .Take(30)
+            .ToList()
+            .OrderBy(m => m.Date)
+            .ThenBy(m => m.Id)
+            .ToList();
     }
 }
