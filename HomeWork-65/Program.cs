@@ -14,7 +14,7 @@ public class Program
         // Add services to the container.
         builder.Services.AddControllersWithViews();
         string connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-        builder.Services.AddDbContext<MyUserContext>(options => options.UseSqlite(connectionString)).
+        builder.Services.AddDbContext<MyUserContext>(options => options.UseNpgsql(connectionString)).
             AddIdentity<MyUser, IdentityRole<int>>(options =>
             {
                 options.Password.RequireDigit = false;
