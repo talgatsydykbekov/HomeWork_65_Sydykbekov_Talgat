@@ -164,6 +164,42 @@ public class MyUserController : Controller
         return RedirectToAction(nameof(Details), new { id = user.Id });
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SendMyData()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+            return Unauthorized(new { message = "Войдите в аккаунт заново." });
+        if (string.IsNullOrWhiteSpace(user.Email))
+            return BadRequest(new { message = "Сначала укажите email в профиле." });
+
+        int messageCount = await _context.Messages.CountAsync(m => m.UserId == user.Id);
+        try
+        {
+            string profileUrl = Url.Action(nameof(Details), "MyUser",
+                new { id = user.Id }, Request.Scheme)
+                ?? throw new InvalidOperationException("Не удалось создать ссылку на профиль.");
+
+            string login = HtmlEncoder.Default.Encode(user.UserName ?? "");
+            string link = HtmlEncoder.Default.Encode(profileUrl);
+            await _emailService.SendEmailAsync(user.Email, "Ваши данные в Ajax Chat",
+                "<h2>Данные вашего профиля</h2>" +
+                $"<p>Логин: {login}</p>" +
+                $"<p>Возраст: {user.Age}</p>" +
+                $"<p>Отправлено сообщений: {messageCount}</p>" +
+                $"<p><a href=\"{link}\">Открыть мой профиль</a></p>");
+
+            return Ok(new { message = "Ваши данные отправлены на почту, указанную в профиле." });
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Не удалось отправить данные пользователю {UserId}.", user.Id);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable,
+                new { message = "Не удалось отправить письмо. Попробуйте позже." });
+        }
+    }
+
     private bool CanEdit(int id) =>
         _userManager.GetUserId(User) == id.ToString() || User.IsInRole("admin");
 
