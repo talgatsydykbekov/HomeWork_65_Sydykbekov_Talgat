@@ -1,55 +1,36 @@
-﻿@model MyUser
-
+@model HomeWork_65.ViewModels.EditProfileViewModel
 @{
-    ViewBag.Title = "Редактирование";
+    ViewBag.Title = "Редактирование профиля";
 }
-
-
- <div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-5">
-            <div class="card shadow-lg rounded-3">
-                <div class="card-header bg-success text-white text-center">
-                    <h4>Редактирование профиля</h4>
-                </div>
-                <div class="card-body">
-                    <form method="post" enctype="multipart/form-data" asp-controller="Account" asp-action="Register">
-                        <div asp-validation-summary="None" class="text-danger"></div>
-                        
-                        <div class="mb-3">
-                            <label asp-for="UserName" class="form-label">Ваше имя</label>
-                            <input asp-for="UserName" class="form-control" />
-                            <span asp-validation-for="UserName" class="text-danger"></span>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label asp-for="Email" class="form-label">Адрес электронный почты</label>
-                            <input asp-for="Email" class="form-control" />
-                            <span asp-validation-for="Email" class="text-danger"></span>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label asp-for="Age" class="form-label">Возраст</label>
-                            <input asp-for="Age" class="form-control" min="2007-01-01" max="2099-01-01"/>
-                            <span asp-validation-for="Age" class="text-danger"></span>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="file">Аватар</label>
-                            <input type="file" name="file" class="form-control">
-                            
-                        </div>
-                        
-                        <button type="submit" class="btn btn-success w-100">Изменить</button>
-                    </form>
-                </div>
-            </div>
+<div class="container py-4" style="max-width: 600px;">
+    <h2>Редактирование профиля</h2>
+    <form method="post" enctype="multipart/form-data" asp-controller="MyUser" asp-action="Edit">
+        <input asp-for="Id" type="hidden" />
+        <div asp-validation-summary="All" class="text-danger"></div>
+        <div class="mb-3">
+            <label asp-for="UserName" class="form-label">Логин</label>
+            <input asp-for="UserName" class="form-control" />
+            <span asp-validation-for="UserName" class="text-danger"></span>
         </div>
-    </div>
+        <div class="mb-3">
+            <label asp-for="Email" class="form-label">Email</label>
+            <input asp-for="Email" class="form-control" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Age" class="form-label">Возраст</label>
+            <input asp-for="Age" class="form-control" min="18" max="100" />
+            <span asp-validation-for="Age" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Avatar" class="form-label">Новый аватар (необязательно)</label>
+            <input asp-for="Avatar" type="file" accept=".jpg,.jpeg,.png,.gif,.webp" class="form-control" />
+            <span asp-validation-for="Avatar" class="text-danger"></span>
+        </div>
+        <button type="submit" class="btn btn-success">Сохранить</button>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">Отмена</a>
+    </form>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/inputmask/5.0.8/jquery.inputmask.min.js"></script>
-
-@{
-    await Html.RenderPartialAsync("_ValidationScriptsPartial");
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
 }

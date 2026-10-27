@@ -9,6 +9,10 @@
 }
 
 <div class="container mt-5">
+    @if (TempData["ProfileNotice"] is string notice)
+    {
+        <div class="alert alert-info" role="status">@notice</div>
+    }
     <div class="card shadow-lg border-0 rounded-3">
         <div class="row g-0">
 
@@ -23,6 +27,10 @@
                     <h3 class="card-title text-primary mb-3">@Model.UserName</h3>
                     <p class="card-text mb-2"><strong>Email:</strong> @Model.Email</p>
                     <p class="card-text mb-2"><strong>Возраст:</strong> @Model.Age</p>
+                    @if (currentUserId == Model.Id)
+                    {
+                        <a asp-action="ChangePassword" class="btn btn-outline-primary">Изменить пароль</a>
+                    }
                     @if (currentUserId == Model.Id || User.IsInRole("admin"))
                     {
                         <div class="mt-4">

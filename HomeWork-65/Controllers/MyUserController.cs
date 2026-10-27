@@ -1,5 +1,7 @@
 ﻿using HomeWork_65.Models;
 using HomeWork_65.ViewModels;
+using HomeWork_65.Services;
+using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -14,13 +16,19 @@ public class MyUserController : Controller
     private readonly IWebHostEnvironment _env;
     private readonly UserManager<MyUser> _userManager;
     private readonly SignInManager<MyUser> _signInManager;
+    private readonly EmailService _emailService;
+    private readonly ILogger<MyUserController> _logger;
 
-    public MyUserController(UserManager<MyUser> userManager, SignInManager<MyUser> signInManager, MyUserContext context,IWebHostEnvironment env)
+    public MyUserController(UserManager<MyUser> userManager, SignInManager<MyUser> signInManager,
+        MyUserContext context, IWebHostEnvironment env, EmailService emailService,
+        ILogger<MyUserController> logger)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _context = context;
         _env = env;
+        _emailService = emailService;
+        _logger = logger;
     }
     public IActionResult Details(int? id)
     {
@@ -36,18 +44,149 @@ public class MyUserController : Controller
         return NotFound();
     }
 
-    public IActionResult Edit(int? id)
+    [HttpGet]
+    public async Task<IActionResult> Edit(int? id)
     {
-        if (id.HasValue)
+        if (!id.HasValue) return NotFound();
+        if (!CanEdit(id.Value)) return Forbid();
+        var user = await _userManager.FindByIdAsync(id.Value.ToString());
+        if (user == null) return NotFound();
+
+        return View(new EditProfileViewModel
         {
-            var user = _context.Users.FirstOrDefault(u => u.Id == id);
-            if (user == null)
-            {
-                return NotFound();
-            }
-            return View(user);
+            Id = user.Id,
+            UserName = user.UserName!,
+            Email = user.Email!,
+            Age = user.Age
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(EditProfileViewModel model)
+    {
+        if (!CanEdit(model.Id)) return Forbid();
+        var user = await _userManager.FindByIdAsync(model.Id.ToString());
+        if (user == null) return NotFound();
+        if (!ModelState.IsValid) return View(model);
+
+        string normalizedEmail = _userManager.NormalizeEmail(model.Email);
+        if (await _userManager.Users.AnyAsync(u => u.Id != user.Id && u.NormalizedEmail == normalizedEmail))
+            ModelState.AddModelError(nameof(model.Email), "Этот email уже используется.");
+
+        string normalizedName = _userManager.NormalizeName(model.UserName);
+        if (await _userManager.Users.AnyAsync(u => u.Id != user.Id && u.NormalizedUserName == normalizedName))
+            ModelState.AddModelError(nameof(model.UserName), "Этот логин уже используется.");
+
+        string? extension = null;
+        if (model.Avatar != null)
+        {
+            extension = Path.GetExtension(model.Avatar.FileName).ToLowerInvariant();
+            if (model.Avatar.Length == 0 || model.Avatar.Length > 5 * 1024 * 1024 ||
+                !new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" }.Contains(extension))
+                ModelState.AddModelError(nameof(model.Avatar), "Выберите изображение JPG, PNG, GIF или WebP до 5 МБ.");
         }
-        return NotFound();
+        if (!ModelState.IsValid) return View(model);
+
+        string? oldEmail = user.Email;
+        var changes = new List<string>();
+        if (user.UserName != model.UserName)
+            changes.Add($"Логин: {HtmlEncoder.Default.Encode(model.UserName)}");
+        if (user.Email != model.Email)
+            changes.Add($"Email: {HtmlEncoder.Default.Encode(model.Email)}");
+        if (user.Age != model.Age)
+            changes.Add($"Возраст: {model.Age}");
+
+        if (model.Avatar != null)
+        {
+            string directory = Path.Combine(_env.WebRootPath, "images", "avatars");
+            Directory.CreateDirectory(directory);
+            string fileName = $"{Guid.NewGuid()}{extension}";
+            await using (var stream = System.IO.File.Create(Path.Combine(directory, fileName)))
+                await model.Avatar.CopyToAsync(stream);
+            user.Avatar = $"images/avatars/{fileName}";
+            changes.Add("Аватар обновлён.");
+        }
+
+        if (changes.Count == 0)
+        {
+            TempData["ProfileNotice"] = "Изменений нет.";
+            return RedirectToAction(nameof(Details), new { id = user.Id });
+        }
+
+        user.UserName = model.UserName;
+        if (user.Email != model.Email) user.EmailConfirmed = false;
+        user.Email = model.Email;
+        user.Age = model.Age;
+        var result = await _userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors) ModelState.AddModelError("", error.Description);
+            return View(model);
+        }
+
+        if (_userManager.GetUserId(User) == user.Id.ToString())
+            await _signInManager.RefreshSignInAsync(user);
+
+        bool sent = await NotifyProfileChange(user, oldEmail, "Профиль изменён",
+            "<h2>Данные вашего профиля изменены</h2><ul><li>" +
+            string.Join("</li><li>", changes) + "</li></ul>");
+        TempData["ProfileNotice"] = sent
+            ? "Профиль сохранён. Уведомление отправлено на почту."
+            : "Профиль сохранён, но отправить уведомление на почту не удалось.";
+        return RedirectToAction(nameof(Details), new { id = user.Id });
+    }
+
+    [HttpGet]
+    public IActionResult ChangePassword() => View(new ChangePasswordViewModel());
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+    {
+        if (!ModelState.IsValid) return View(model);
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors) ModelState.AddModelError("", error.Description);
+            return View(model);
+        }
+
+        await _signInManager.RefreshSignInAsync(user);
+        bool sent = await NotifyProfileChange(user, user.Email, "Пароль изменён",
+            "<p>Пароль вашего аккаунта Ajax Chat успешно изменён.</p>");
+        TempData["ProfileNotice"] = sent
+            ? "Пароль изменён. Уведомление отправлено на почту."
+            : "Пароль изменён, но отправить уведомление на почту не удалось.";
+        return RedirectToAction(nameof(Details), new { id = user.Id });
+    }
+
+    private bool CanEdit(int id) =>
+        _userManager.GetUserId(User) == id.ToString() || User.IsInRole("admin");
+
+    private async Task<bool> NotifyProfileChange(MyUser user, string? oldEmail, string subject, string body)
+    {
+        bool sent = true;
+        var recipients = new[] { oldEmail, user.Email }
+            .Where(email => !string.IsNullOrWhiteSpace(email))
+            .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        if (recipients.Count == 0) return false;
+        foreach (var email in recipients)
+        {
+            try
+            {
+                await _emailService.SendEmailAsync(email!, subject, body);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(exception, "Не удалось отправить уведомление пользователю {UserId}.", user.Id);
+                sent = false;
+            }
+        }
+        return sent;
     }
     
     [Authorize(Roles = "admin")]
